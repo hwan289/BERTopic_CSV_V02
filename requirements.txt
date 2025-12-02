@@ -7,3 +7,4 @@ pyarrow
 torch
 sentence-transformers
 nltk
+numpy
