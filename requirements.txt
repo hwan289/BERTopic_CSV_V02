@@ -1,0 +1,9 @@
+streamlit
+bertopic
+pandas
+plotly
+scikit-learn
+pyarrow
+torch
+sentence-transformers
+nltk
