@@ -86,7 +86,6 @@ TRANS = {
         'en': "Shows similarity between topics. Dark blue = High similarity.",
         'zh': "显示主题间的相似度。深蓝色 = 高相似度。"
     },
-    # New Translations for the Representation Tab
     'rep_tab_title': {'en': "🔠 Representations (KeyBERT & MMR)", 'zh': "🔠 主题描述 (KeyBERT & MMR)"},
     'rep_help_title': {'en': "ℹ️ What are these?", 'zh': "ℹ️ 这些是什么？"},
     'rep_help_text': {
@@ -99,7 +98,7 @@ def t(key):
     return TRANS.get(key, {}).get(st.session_state['lang'], "Missing")
 
 # -----------------------------------------------------------------------------
-# Styling Helpers
+# Styling Helpers (UPDATED FOR MARGINS)
 # -----------------------------------------------------------------------------
 GEMINI_BLUE = "#4285F4" 
 
@@ -108,7 +107,14 @@ def style_fig(fig):
     if fig:
         fig.update_layout(
             title_font_color=GEMINI_BLUE,
-            margin=dict(t=80), 
+            
+            # 💡 MARGIN UPDATE: 
+            # 't' (top) controls space from the top of the container. 
+            # Increasing 't' pushes the chart down, away from the title.
+            # 'pad' inside 'title' adds extra buffer specifically below the text.
+            margin=dict(t=120, b=50, l=50, r=50), 
+            title=dict(pad=dict(b=20)), 
+            
             hoverlabel=dict(
                 bgcolor="#333333",
                 font_color="#4b8bf5",
@@ -207,7 +213,6 @@ if st.button(t('train_btn'), type="primary", disabled=(not docs)):
             from hdbscan import HDBSCAN
             from sklearn.feature_extraction.text import CountVectorizer 
             
-            # 💡 NEW IMPORTS: Import the representation models
             from bertopic.representation import KeyBERTInspired, MaximalMarginalRelevance
 
             # 2. Configure Vectorizer
@@ -236,8 +241,7 @@ if st.button(t('train_btn'), type="primary", disabled=(not docs)):
             umap_model = UMAP(n_neighbors=n_neighbors_val, n_components=n_components_val, min_dist=0.0, metric='cosine', low_memory=False, n_jobs=1)
             hdbscan_model = HDBSCAN(min_cluster_size=safe_min_topic_size, metric='euclidean', cluster_selection_method='eom', prediction_data=True, core_dist_n_jobs=1)
 
-            # 💡 NEW FEATURE: Define the Representation Models dictionary
-            # This tells BERTopic to calculate these specific variations
+            # Representation Models
             representation_model = {
                 "KeyBERT": KeyBERTInspired(),
                 "MMR": MaximalMarginalRelevance(diversity=0.3)
@@ -250,10 +254,7 @@ if st.button(t('train_btn'), type="primary", disabled=(not docs)):
                 vectorizer_model=vectorizer_model,
                 umap_model=umap_model,
                 hdbscan_model=hdbscan_model,
-                
-                # 💡 PASS THE MODELS HERE
                 representation_model=representation_model,
-                
                 verbose=True
             )
 
@@ -294,19 +295,19 @@ if 'model' in st.session_state:
     real_topic_count = len(topic_info) - 1 
     has_topics = real_topic_count > 0
     
+    # Large vertical space before results
     st.markdown("<br><br><br>", unsafe_allow_html=True) 
     st.divider()
     st.header(t('results_header'))
     
     import plotly.express as px
 
-    # 💡 UPDATED: Added a 5th Tab
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Topic Info", 
         "Distance Map", 
         "Bar Chart", 
         "Heatmap", 
-        t('rep_tab_title') # New Tab Title
+        t('rep_tab_title')
     ])
     
     with tab1:
@@ -345,7 +346,6 @@ if 'model' in st.session_state:
                 st.plotly_chart(style_fig(fig), use_container_width=True)
             except Exception as e: st.warning(t('viz_error').format(e))
 
-    # 💡 NEW TAB: Representation Comparison
     with tab5:
         with st.expander(t('rep_help_title')):
             st.markdown(t('rep_help_text'))
@@ -353,26 +353,17 @@ if 'model' in st.session_state:
         if has_topics and hasattr(model, 'topic_aspects_'):
             st.subheader("Comparison Table")
             
-            # Helper to format keyword lists into strings
             def get_keywords_str(aspect_name, topic_id):
                 if aspect_name not in model.topic_aspects_: return ""
                 if topic_id not in model.topic_aspects_[aspect_name]: return ""
-                # Take top 5 words
                 words = [x[0] for x in model.topic_aspects_[aspect_name][topic_id][:5]]
                 return ", ".join(words)
 
-            # Build a comparison DataFrame
-            # Start with basic topic info
             comp_df = topic_info[['Topic', 'Count', 'Name']].copy()
             comp_df.rename(columns={'Name': 'Default (c-TF-IDF)'}, inplace=True)
-            
-            # Add KeyBERT column
             comp_df['KeyBERT Inspired'] = comp_df['Topic'].apply(lambda x: get_keywords_str('KeyBERT', x))
-            
-            # Add MMR column
             comp_df['MMR (Diversity)'] = comp_df['Topic'].apply(lambda x: get_keywords_str('MMR', x))
             
-            # Filter out -1 outlier if desired, or keep it. Let's keep it but put it at the end.
             st.dataframe(comp_df, use_container_width=True)
             
         else:
