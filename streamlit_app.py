@@ -18,7 +18,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # Page Configuration
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="BERTopic Explorer V02",
+    page_title="BERTopic Explorer",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -45,7 +45,7 @@ def toggle_language():
     st.session_state['lang'] = 'zh' if st.session_state['lang'] == 'en' else 'en'
 
 TRANS = {
-    'title': { 'en': "🧠 BERTopic Interactive Explorer", 'zh': "🧠 BERTopic 交互式探索器" },
+    'title': { 'en': "🧠 BERTopic Interactive Explorer V02", 'zh': "🧠 BERTopic 交互式探索器 V02" },
     'desc': {'en': "Advanced Topic Modeling with BERTopic.", 'zh': "BERTopic 高级主题建模。"},
     'sidebar_config': {'en': "Configuration", 'zh': "配置"},
     'remove_stopwords': {'en': "Remove Stopwords (English)", 'zh': "移除停用词 (英文)"},
